@@ -86,3 +86,10 @@ header .viewlink{margin-left:auto}
 /* Owner link on the scan page */
 .owner{margin:0;padding:0 1.25rem 2rem;font-size:.95rem}
 .owner a{color:var(--blue);font-weight:700}
+
+/* Several emergency contacts */
+.contacts{display:grid;gap:.75rem}
+.btn.alt{border-color:var(--blue);color:var(--blue)}
+.btn.alt span{font-weight:400;font-size:1rem}
+.rowtitle{margin:0 0 .6rem;font-weight:700}
+.item .up,.item .rmc{min-height:2.75rem;font-size:.95rem;margin-bottom:.8rem}

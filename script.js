@@ -1,7 +1,7 @@
 let P=null;
 const T={
  en:{tagline:"Emergency profile",owner:"Owner? Edit this profile",alerts:"Medical alerts",allergic:"Allergic to",has:"Has",
-  call:"Call",call911:"Call 911",sendLoc:"Text my location to contact",hospital:"Nearest hospital",speak:"Read aloud",
+  call:"Call",call911:"Call 911",sendTo:"Text this location to",hospital:"Nearest hospital",speak:"Read aloud",
   guideH:"What to do",q1:"Is the person awake and breathing?",q2:"Are they wheezing or struggling to breathe?",
   yes:"Yes",no:"No",again:"Start over",
   r911:"Call 911 now and follow the dispatcher's instructions.",
@@ -12,7 +12,7 @@ const T={
   more:"More hotlines",h911:"Emergency: police, fire, medical",demo:"Demo profile with fictional data.",
   alertMsg:"Aidly alert: the bracelet was scanned and this person may need help."},
  fil:{tagline:"Impormasyong pang-emerhensiya",owner:"May-ari? I-edit ang profile",alerts:"Mga babala sa kalusugan",allergic:"May allergy sa",has:"May",
-  call:"Tawagan si",call911:"Tawagan ang 911",sendLoc:"I-text ang lokasyon ko sa contact",hospital:"Pinakamalapit na ospital",speak:"Basahin nang malakas",
+  call:"Tawagan si",call911:"Tawagan ang 911",sendTo:"I-text ang lokasyon kay",hospital:"Pinakamalapit na ospital",speak:"Basahin nang malakas",
   guideH:"Ano ang gagawin",q1:"Gising ba at humihinga ang tao?",q2:"Humihingal ba o nahihirapang huminga?",
   yes:"Oo",no:"Hindi",again:"Ulitin",
   r911:"Tumawag agad sa 911 at sundin ang mga tagubilin ng dispatcher.",
@@ -47,10 +47,12 @@ function render(){
   $("#alertList").innerHTML=items.map(i=>`<div class="alert"><strong>${esc(i.h)}</strong>${esc(i.n)}</div>`).join("");
   $(".alerts").hidden=!items.length;
 
-  const c=P.contact, rel=L(c.rel);
-  const b=$("#callContact");
-  b.href="tel:"+telOf(c.phone);
-  b.innerHTML=`${esc(t("call"))} ${esc(c.name)}${rel?` (${esc(rel)})`:""}<span>${esc(c.phone)}</span>`;
+  const cs=contactsOf(P);
+  $("#contactList").innerHTML=cs.map((c,i)=>{
+    const rel=L(c.rel);
+    return `<a class="btn ${i?"alt":"main"}" href="tel:${esc(telOf(c.phone))}">${esc(t("call"))} ${esc(c.name)}${rel?` (${esc(rel)})`:""}<span>${esc(c.phone)}</span></a>`;
+  }).join("");
+  $("#loc").textContent=`${t("sendTo")} ${cs[0].name}`;   // the location text goes to the first (primary) contact
 
   $("#details").innerHTML=(P.meds.length?`<dt>${esc(t("meds"))}</dt><dd>${esc(P.meds.map(m=>L(m)).join(", "))}</dd>`:"")
     +`<dt>${esc(t("updated"))}</dt><dd>${esc(P.updated)}</dd>`;
@@ -88,7 +90,7 @@ $("#speak").addEventListener("click",()=>{
 $("#loc").addEventListener("click",()=>{
   const send=link=>{
     const body=encodeURIComponent(`${t("alertMsg")} (${P.name})`+(link?` Location: ${link}`:""));
-    location.href=`sms:${telOf(P.contact.phone)}?&body=${body}`;
+    location.href=`sms:${telOf(contactsOf(P)[0].phone)}?&body=${body}`;
   };
   if(!navigator.geolocation)return send("");
   navigator.geolocation.getCurrentPosition(

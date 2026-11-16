@@ -7,7 +7,10 @@ const clone = o => JSON.parse(JSON.stringify(o));
 
 const DEFAULT_PROFILE = {
   name: "Migi Santos", age: 31, blood: "O+", updated: "24 Oct 2026",
-  contact: { name: "Ana Santos", rel: { en: "sister", fil: "kapatid" }, phone: "0917 000 0000" },
+  contacts: [
+    { name: "Ana Santos", rel: { en: "sister", fil: "kapatid" }, phone: "0917 000 0000" },
+    { name: "Mario Santos", rel: { en: "father", fil: "tatay" }, phone: "0918 000 0000" }
+  ],
   allergies: [{ en: "Penicillin", fil: "Penicillin",
     note: { en: "Do not give penicillin-type antibiotics.", fil: "Huwag magbigay ng antibiotic na uri ng penicillin." } }],
   conditions: [{ en: "Asthma", fil: "Hika",
@@ -15,8 +18,14 @@ const DEFAULT_PROFILE = {
   meds: [{ en: "Rescue inhaler (salbutamol), as needed", fil: "Rescue inhaler (salbutamol), kung kinakailangan" }]
 };
 
+// Older profiles saved one "contact"; newer ones save a "contacts" list. This handles both.
+function contactsOf(p) {
+  if (p && Array.isArray(p.contacts) && p.contacts.length) return p.contacts;
+  return p && p.contact ? [p.contact] : [];
+}
+
 function validProfile(p) {
-  return !!(p && typeof p === "object" && p.name && p.contact &&
+  return !!(p && typeof p === "object" && p.name && contactsOf(p).length &&
     Array.isArray(p.allergies) && Array.isArray(p.conditions) && Array.isArray(p.meds));
 }
 

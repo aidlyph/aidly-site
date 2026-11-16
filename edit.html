@@ -47,13 +47,10 @@
     </fieldset>
 
     <fieldset>
-      <legend>Emergency contact</legend>
-      <label>Contact name<input id="cname" required></label>
-      <div class="two">
-        <label>Relationship (English)<input id="relEn" placeholder="sister"></label>
-        <label>Relationship (Filipino, optional)<input id="relFil" placeholder="kapatid"></label>
-      </div>
-      <label>Phone number<input id="phone" type="tel" inputmode="tel" required></label>
+      <legend>Emergency contacts</legend>
+      <p class="note" style="margin-top:0">The first contact is shown first and receives the location text. You can add up to 5 people.</p>
+      <div id="contacts"></div>
+      <button type="button" class="btn quiet" data-add="contacts">Add another contact</button>
     </fieldset>
 
     <fieldset>

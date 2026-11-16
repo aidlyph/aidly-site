@@ -31,22 +31,68 @@ function collect(kind) {
   }).filter(o => o.en);
 }
 
-const blank = () => ({ name: "", age: "", blood: "Unknown",
-  contact: { name: "", rel: { en: "", fil: "" }, phone: "" }, allergies: [], conditions: [], meds: [] });
+const blank = () => ({ name: "", age: "", blood: "Unknown", contacts: [], allergies: [], conditions: [], meds: [] });
 
 function fill(p) {
-  const c = p.contact || {}, rel = c.rel || {};
   $("#name").value = p.name || "";
   $("#age").value = p.age || "";
   $("#blood").value = p.blood || "Unknown";
-  $("#cname").value = c.name || "";
-  $("#relEn").value = rel.en || "";
-  $("#relFil").value = rel.fil || "";
-  $("#phone").value = c.phone || "";
+  $("#contacts").innerHTML = "";
+  const cs = contactsOf(p).slice(0, MAX_CONTACTS);
+  (cs.length ? cs : [{}]).forEach(c => addContact(c));      // always show at least one contact row
   ["allergies", "conditions", "meds"].forEach(k => {
     $("#" + k).innerHTML = "";
     (p[k] || []).forEach(item => addRow(k, item));
   });
+}
+
+/* ---------- emergency contacts ---------- */
+const MAX_CONTACTS = 5;
+
+function renumber() {
+  document.querySelectorAll("#contacts .contact").forEach((d, i) => {
+    d.querySelector(".rowtitle").textContent = i === 0 ? "Primary contact (called first)" : `Contact ${i + 1}`;
+    d.querySelector(".up").hidden = i === 0;
+  });
+}
+
+function addContact(c = {}) {
+  if (document.querySelectorAll("#contacts .contact").length >= MAX_CONTACTS) {
+    say(`You can add up to ${MAX_CONTACTS} contacts.`, false); return;
+  }
+  const d = document.createElement("div");
+  d.className = "item contact";
+  // Labels are fixed text; user data is set through .value below, never through innerHTML.
+  d.innerHTML =
+    `<p class="rowtitle"></p>` +
+    `<label>Contact name<input data-k="name" autocomplete="off"></label>` +
+    `<div class="two"><label>Relationship (English)<input data-k="relEn" placeholder="sister"></label>` +
+    `<label>Relationship (Filipino, optional)<input data-k="relFil" placeholder="kapatid"></label></div>` +
+    `<label>Phone number<input data-k="phone" type="tel" inputmode="tel"></label>` +
+    `<div class="two"><button type="button" class="btn quiet up">Make primary</button>` +
+    `<button type="button" class="btn quiet rmc">Remove</button></div>`;
+  const set = (k, v) => { d.querySelector(`[data-k="${k}"]`).value = v || ""; };
+  const rel = c.rel || {};
+  set("name", c.name); set("relEn", rel.en); set("relFil", rel.fil); set("phone", c.phone);
+  $("#contacts").append(d);
+  renumber();
+}
+
+function collectContacts() {
+  const list = [];
+  const rows = [...document.querySelectorAll("#contacts .contact")];
+  for (let i = 0; i < rows.length; i++) {
+    const v = k => rows[i].querySelector(`[data-k="${k}"]`).value.trim();
+    const name = v("name"), phone = v("phone");
+    if (!name && !phone) continue;                              // an empty row is ignored
+    const digits = phone.replace(/\D/g, "");
+    const who = i === 0 ? "the primary contact" : `contact ${i + 1}`;
+    if (!name) return { error: `Please enter a name for ${who}.` };
+    if (digits.length < 7 || digits.length > 15) return { error: `Please enter a valid phone number for ${who}.` };
+    list.push({ name, rel: { en: v("relEn"), fil: v("relFil") }, phone });
+  }
+  if (!list.length) return { error: "Please add at least one emergency contact." };
+  return { list };
 }
 
 /* ---------- messages ---------- */
@@ -83,7 +129,14 @@ function enter(data) {
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
   const add = e.target.closest("[data-add]");
-  if (add) { addRow(add.dataset.add); return; }
+  if (add) { if (add.dataset.add === "contacts") addContact(); else addRow(add.dataset.add); return; }
+  const up = e.target.closest(".up");
+  if (up) { const row = up.closest(".contact"); row.parentNode.prepend(row); renumber(); return; }
+  const rmc = e.target.closest(".rmc");
+  if (rmc) {
+    if (document.querySelectorAll("#contacts .contact").length <= 1) return say("Keep at least one emergency contact.", false);
+    rmc.closest(".contact").remove(); renumber(); return;
+  }
   const rm = e.target.closest(".rm");
   if (rm) rm.closest(".item").remove();
 });
@@ -108,18 +161,18 @@ $("#lock").addEventListener("click", () => location.reload());
 
 $("#f").addEventListener("submit", async e => {
   e.preventDefault();
-  const name = $("#name").value.trim(), cname = $("#cname").value.trim(), phone = $("#phone").value.trim();
-  const digits = phone.replace(/\D/g, "");
+  const name = $("#name").value.trim();
   const age = $("#age").value ? Number($("#age").value) : "";
   if (!name) return say("Please enter your name.", false);
   if (age !== "" && (age < 0 || age > 120)) return say("Please enter a valid age.", false);
-  if (!cname) return say("Please enter an emergency contact name.", false);
-  if (digits.length < 7 || digits.length > 15) return say("Please enter a valid phone number for your contact.", false);
+  const cs = collectContacts();
+  if (cs.error) return say(cs.error, false);
 
   const profile = {
     name, age, blood: $("#blood").value,
     updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-    contact: { name: cname, rel: { en: $("#relEn").value.trim(), fil: $("#relFil").value.trim() }, phone },
+    contact: cs.list[0],          // also kept so older copies of the scan page still work
+    contacts: cs.list,
     allergies: collect("allergies"), conditions: collect("conditions"), meds: collect("meds")
   };
 
