@@ -96,11 +96,3 @@ header .viewlink{margin-left:auto}
 
 /* Lock button sits at the right of the edit page header */
 #lock{margin-left:auto}
-
-/* Botpress Webchat Overlay & Z-Index Isolation */
-#bp-web-widget-container,
-.bpFab,
-.bpWebchat,
-iframe[title*="Botpress"] {
-  z-index: 9999 !important;
-}
