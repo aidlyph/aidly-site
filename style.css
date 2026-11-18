@@ -94,5 +94,7 @@ header .viewlink{margin-left:auto}
 .rowtitle{margin:0 0 .6rem;font-weight:700}
 .item .up,.item .rmc{min-height:2.75rem;font-size:.95rem;margin-bottom:.8rem}
 
-/* Lock button sits at the right of the edit page header */
-#lock{margin-left:auto}
+/* Botpress Webchat Overlay Isolation */
+#bp-web-widget-container,
+.bpWebchat,
+.bpFab{z-index:9999!important}
