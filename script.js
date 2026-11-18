@@ -133,10 +133,11 @@ async function init(){
     const p=await backend.publicProfile(id);
     if(!validProfile(p)) return missing("This bracelet isn't set up yet","If it's yours, set it up with the code that came with it.",true);
     P=p; render();
-    startBot(id);   
-    $("footer").hidden=!!id&&!backend.demo;          
+    $("footer").hidden=!!id&&!backend.demo;
     $("#ownerLine").hidden=!(id||backend.demo);
-  }catch(e){ missing("Could not load this profile","Check your internet connection and try again.",false); }
+  }catch(e){ missing("Could not load this profile","Check your internet connection and try again.",false); return; }
+
+  try{ startBot(id); }catch(e){ console.warn("Chatbot failed to start",e); }
 }
 function missing(h,m,owner){
   $("#name").textContent=h; $("#meta").textContent=m;
