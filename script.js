@@ -98,6 +98,32 @@ $("#loc").addEventListener("click",()=>{
     ()=>send(""),{timeout:6000});
 });
 
+const BOT_CONFIG = "https://files.bpcontent.cloud/2026/10/27/05/20261027052415-ZT3Q5FBX.js";
+
+function clearBotpressStorage() {
+  [localStorage, sessionStorage].forEach(store => {
+    try {
+      Object.keys(store)
+        .filter(k => /^bp|botpress/i.test(k))
+        .forEach(k => store.removeItem(k));
+    } catch (e) {}
+  });
+}
+
+function startBot(profileId) {
+  clearBotpressStorage();                      
+  const s = document.createElement("script");
+  s.src = BOT_CONFIG;
+  s.onload = () => {
+    window.botpress?.on?.("webchat:ready", () => {
+      window.botpress.updateUser?.({ data: { braceletId: profileId || "demo" } });
+    });
+  };
+  document.body.appendChild(s);
+}
+
+window.addEventListener("pageshow", e => { if (e.persisted) location.reload(); });
+
 async function init(){
   const id=new URLSearchParams(location.search).get("id");
   $("#ownerA").href="edit.html"+(id?"?id="+encodeURIComponent(id):"");
@@ -107,7 +133,8 @@ async function init(){
     const p=await backend.publicProfile(id);
     if(!validProfile(p)) return missing("This bracelet isn't set up yet","If it's yours, set it up with the code that came with it.",true);
     P=p; render();
-    $("footer").hidden=!!id&&!backend.demo;          // the demo notice only shows on the sample profile
+    startBot(id);   
+    $("footer").hidden=!!id&&!backend.demo;          
     $("#ownerLine").hidden=!(id||backend.demo);
   }catch(e){ missing("Could not load this profile","Check your internet connection and try again.",false); }
 }
