@@ -3,13 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Aidly: Emergency Profile</title>
-<!-- PROTOTYPE. All data below is fictional (Migi Santos persona).
-     Before real use: have a doctor verify the "What to do" steps, and re-check every hotline number. -->
+<title>Aidly: Edit Profile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+  .f label { display:block; font-weight:700; margin:.85rem 0 .25rem; }
+  .f input, .f textarea {
+    width:100%; box-sizing:border-box; font:inherit; padding:.7rem .8rem;
+    border:2px solid #b9c3d6; border-radius:10px; background:#fff; color:#111;
+  }
+  .f input:focus { outline:3px solid #2F5FBF; outline-offset:1px; }
+  .f .two { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+  .f h3 { margin:1.5rem 0 .25rem; }
+  .f .hint { font-size:.9rem; opacity:.75; margin:.15rem 0 .5rem; }
+  .rowcard { border:2px solid #d5dcea; border-radius:12px; padding:.25rem .9rem .9rem; margin:.6rem 0; }
+  .rowcard .rm { margin-top:.75rem; }
+  .status { margin:1rem 0; padding:.75rem 1rem; border-radius:10px; font-weight:700; }
+  .status:empty { display:none; }
+  .status.err { background:#fde8e8; color:#8a1c1c; }
+  .status.ok  { background:#e6f4ea; color:#1e5a2e; }
+  .stack > * { margin-bottom:.75rem; }
+  .btn { cursor:pointer; text-align:center; text-decoration:none; }
+  @media (max-width:480px) { .f .two { grid-template-columns:1fr; } }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -21,65 +39,217 @@
         <path d="M19 13h6v6h6v6h-6v6h-6v-6h-6v-6h6z" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div class="brand">AIDLY<small data-i18n="tagline"></small></div>
-    <div class="lang" role="group" aria-label="Language">
-      <button data-lang="en" aria-pressed="true">EN</button>
-      <button data-lang="fil" aria-pressed="false">FIL</button>
-    </div>
+    <div class="brand">AIDLY<small>Edit profile</small></div>
   </header>
 
   <div class="who">
-    <h1 id="name"></h1>
-    <p class="meta" id="meta"></p>
-    <p class="summary" id="summary"></p>
+    <h1>Edit profile</h1>
+    <p class="meta" id="intro"></p>
   </div>
 
-  <section class="alerts" aria-labelledby="alerts-h">
-    <h2 id="alerts-h" data-i18n="alerts"></h2>
-    <div id="alertList"></div>
-  </section>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
 
-  <div class="actions">
-    <div class="contacts" id="contactList"></div>
-    <div class="row">
-      <a class="btn sos" href="tel:911" data-i18n="call911"></a>
-      <button class="btn" id="loc"></button>
+  <!-- Step 1: enter the edit code -->
+  <section class="block f" id="unlockBox" hidden>
+    <label for="code">Edit code (came with your bracelet)</label>
+    <input id="code" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="stack" style="margin-top:1rem">
+      <button class="btn" id="unlockBtn" type="button">Unlock</button>
     </div>
-    <div class="row">
-      <a class="btn quiet" href="https://www.google.com/maps/search/hospital+near+me" target="_blank" rel="noopener" data-i18n="hospital"></a>
-      <button class="btn quiet" id="speak" data-i18n="speak"></button>
+  </section>
+
+  <!-- Step 2: the form -->
+  <form class="block f" id="form" hidden autocomplete="off">
+    <label for="f_name">Full name</label>
+    <input id="f_name" required>
+
+    <div class="two">
+      <div><label for="f_age">Age</label><input id="f_age" type="number" min="0" max="120" inputmode="numeric"></div>
+      <div><label for="f_blood">Blood type</label><input id="f_blood" placeholder="e.g. O+"></div>
     </div>
-  </div>
 
-  <section class="block" id="guideBlock">
-    <h3 data-i18n="guideH"></h3>
-    <div id="guide"></div>
-    <p class="note" data-i18n="sample"></p>
-  </section>
+    <h3>Emergency contacts</h3>
+    <p class="hint">The first contact is the main one. The "Text this location" button sends to them.</p>
+    <div id="contacts"></div>
+    <button class="btn quiet" type="button" data-add="contacts">+ Add contact</button>
 
-  <section class="block">
-    <dl id="details"></dl>
-  </section>
+    <h3>Allergies</h3>
+    <div id="allergies"></div>
+    <button class="btn quiet" type="button" data-add="allergies">+ Add allergy</button>
 
-  <section class="block">
-    <details>
-      <summary data-i18n="more"></summary>
-      <p><a href="tel:911">911</a> <span data-i18n="h911"></span></p>
-      <p><a href="tel:143">143</a> Philippine Red Cross</p>
-      <p><a href="tel:+63285270000">(02) 8527-0000</a></p>
-      <p><a href="tel:+63287902300">(02) 8790-2300</a></p>
-    </details>
-  </section>
+    <h3>Medical conditions</h3>
+    <div id="conditions"></div>
+    <button class="btn quiet" type="button" data-add="conditions">+ Add condition</button>
 
-  <footer data-i18n="demo"></footer>
-  <p class="owner" id="ownerLine" hidden><a id="ownerA" href="edit.html"></a></p>
+    <h3>Medications</h3>
+    <div id="meds"></div>
+    <button class="btn quiet" type="button" data-add="meds">+ Add medication</button>
+
+    <div class="stack" style="margin-top:1.5rem">
+      <button class="btn" id="saveBtn" type="submit">Save profile</button>
+      <a class="btn quiet" id="viewLink" href="index.html">View public profile</a>
+    </div>
+  </form>
+
+  <p class="owner"><a id="backA" href="index.html">Back to profile</a></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="storage.js"></script>
-<script src="script.js"></script>
-<script src="https://cdn.botpress.cloud/webchat/v5.0/inject.js"></script>
-<script src="https://files.bpcontent.cloud/2026/10/27/05/20261027052415-ZT3Q5FBX.js" defer></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const id = new URLSearchParams(location.search).get("id");
+let code = "";
+
+const viewUrl = "index.html" + (id ? "?id=" + encodeURIComponent(id) : "");
+$("#backA").href = viewUrl;
+$("#viewLink").href = viewUrl;
+
+function say(msg, kind) {
+  const el = $("#status");
+  el.textContent = msg || "";
+  el.className = "status" + (kind ? " " + kind : "");
+  if (msg) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+/* ---------- Repeating rows ---------- */
+const ROWS = {
+  contacts: { fields: [["name","Name"],["rel_en","Relationship (English)"],["rel_fil","Relationship (Filipino, optional)"],["phone","Phone number","tel"]] },
+  allergies: { fields: [["en","Allergy"],["fil","Allergy in Filipino (optional)"],["note_en","What to do (English)"],["note_fil","What to do (Filipino, optional)"]] },
+  conditions: { fields: [["en","Condition"],["fil","Condition in Filipino (optional)"],["note_en","What to do (English)"],["note_fil","What to do (Filipino, optional)"]] },
+  meds: { fields: [["en","Medication and dose"],["fil","In Filipino (optional)"]] }
+};
+
+function addRow(kind, v) {
+  v = v || {};
+  const card = document.createElement("div");
+  card.className = "rowcard";
+  card.innerHTML = ROWS[kind].fields.map(([k, label, type]) =>
+    `<label>${esc(label)}<input data-k="${k}" type="${type || "text"}" value="${esc(v[k] || "")}"></label>`
+  ).join("") + `<button class="btn quiet rm" type="button" data-rm>Remove</button>`;
+  $("#" + kind).appendChild(card);
+}
+
+document.addEventListener("click", e => {
+  const add = e.target.closest("[data-add]");
+  if (add) { addRow(add.dataset.add); return; }
+  const rm = e.target.closest("[data-rm]");
+  if (rm) rm.closest(".rowcard").remove();
+});
+
+function readRows(kind) {
+  return [...document.querySelectorAll("#" + kind + " .rowcard")].map(card => {
+    const o = {};
+    card.querySelectorAll("[data-k]").forEach(i => { o[i.dataset.k] = i.value.trim(); });
+    return o;
+  });
+}
+
+/* ---------- Load a profile into the form ---------- */
+function fillForm(p) {
+  p = p || {};
+  $("#f_name").value = p.name || "";
+  $("#f_age").value = p.age || "";
+  $("#f_blood").value = p.blood && p.blood !== "Unknown" ? p.blood : "";
+  ["contacts","allergies","conditions","meds"].forEach(k => { $("#" + k).innerHTML = ""; });
+
+  const cs = contactsOf(p);
+  (cs.length ? cs : [{}]).forEach(c => addRow("contacts", {
+    name: c.name, phone: c.phone, rel_en: c.rel && c.rel.en, rel_fil: c.rel && c.rel.fil
+  }));
+  (p.allergies || []).forEach(a => addRow("allergies", { en: a.en, fil: a.fil, note_en: a.note && a.note.en, note_fil: a.note && a.note.fil }));
+  (p.conditions || []).forEach(c => addRow("conditions", { en: c.en, fil: c.fil, note_en: c.note && c.note.en, note_fil: c.note && c.note.fil }));
+  (p.meds || []).forEach(m => addRow("meds", { en: m.en, fil: m.fil }));
+
+  $("#unlockBox").hidden = true;
+  $("#form").hidden = false;
+}
+
+/* ---------- Read the form back into a profile ---------- */
+function buildProfile() {
+  const age = parseInt($("#f_age").value, 10);
+  const pair = (en, fil) => ({ en, fil: fil || en });
+  return {
+    name: $("#f_name").value.trim(),
+    age: isNaN(age) ? "" : age,
+    blood: $("#f_blood").value.trim() || "Unknown",
+    updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+    contacts: readRows("contacts").filter(c => c.name && c.phone)
+      .map(c => ({ name: c.name, phone: c.phone, rel: pair(c.rel_en, c.rel_fil) })),
+    allergies: readRows("allergies").filter(a => a.en)
+      .map(a => ({ ...pair(a.en, a.fil), note: pair(a.note_en, a.note_fil) })),
+    conditions: readRows("conditions").filter(c => c.en)
+      .map(c => ({ ...pair(c.en, c.fil), note: pair(c.note_en, c.note_fil) })),
+    meds: readRows("meds").filter(m => m.en).map(m => pair(m.en, m.fil))
+  };
+}
+
+const REASONS = {
+  bad: "That code is not correct. Please check it and try again.",
+  locked: "Too many wrong attempts. Please wait a while and try again.",
+  missing: "This bracelet is not set up yet."
+};
+
+/* ---------- Unlock ---------- */
+async function unlock() {
+  const typed = $("#code").value.trim();
+  if (!typed) { say("Please enter your edit code.", "err"); return; }
+  $("#unlockBtn").disabled = true;
+  say("Checking code...");
+  try {
+    const r = await backend.unlock(id, typed);
+    if (r && r.ok) {
+      code = typed;
+      say("");
+      fillForm(validProfile(r.data) ? r.data : null);
+    } else {
+      say(REASONS[r && r.reason] || "Could not unlock. Please try again.", "err");
+    }
+  } catch (e) {
+    say("Could not reach the server. Check your internet connection and try again.", "err");
+  }
+  $("#unlockBtn").disabled = false;
+}
+$("#unlockBtn").addEventListener("click", unlock);
+$("#code").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); unlock(); } });
+
+/* ---------- Save ---------- */
+$("#form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const p = buildProfile();
+  if (!p.name) { say("Please enter the person's name.", "err"); return; }
+  if (!p.contacts.length) { say("Add at least one emergency contact with a name and phone number.", "err"); return; }
+
+  $("#saveBtn").disabled = true;
+  say("Saving...");
+  try {
+    const r = await backend.save(id, code, p);
+    if (r && r.ok === false) say(REASONS[r.reason] || "Could not save. Please try again.", "err");
+    else say("Saved. The public profile is updated.", "ok");
+  } catch (err) {
+    say(err && err.message ? err.message : "Could not save. Check your internet connection and try again.", "err");
+  }
+  $("#saveBtn").disabled = false;
+});
+
+/* ---------- Start ---------- */
+(async function start() {
+  if (backend.demo) {
+    $("#intro").textContent = "Demo mode: changes are saved in this browser only.";
+    const r = await backend.unlock();
+    fillForm(r.data);
+  } else if (!id) {
+    $("#intro").textContent = "";
+    say("Open this page from the Owner link on your bracelet's profile.", "err");
+  } else {
+    $("#intro").textContent = "Enter your edit code to change this profile.";
+    $("#unlockBox").hidden = false;
+  }
+})();
+</script>
+<!-- No chatbot scripts on this page on purpose. -->
 </body>
 </html>
