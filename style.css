@@ -98,3 +98,7 @@ header .viewlink{margin-left:auto}
 #bp-web-widget-container,
 .bpWebchat,
 .bpFab{z-index:9999!important}
+
+/* ...all your existing CSS above stays as is... */
+
+.owner { position: relative; z-index: 10; padding-bottom: 5rem; }
